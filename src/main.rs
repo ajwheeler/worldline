@@ -13,7 +13,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     #[command(alias = "a")]
-    Add { date: String, event: String },
+    Add { date: String, description: String },
     #[command(alias = "s")]
     Show {
         #[arg(num_args = 0..=2)]
@@ -37,12 +37,19 @@ fn main() {
 
     let worldline_file =
         env::var("WORLDLINE_FILE").expect("WORLDLINE_FILE environment variable not set");
-    let worldline =
+    let mut worldline =
         wl::WorldLine::from_file(&worldline_file).expect("Could not read worldline file");
 
     match cli.command {
-        Commands::Add { date, event } => {
-            println!("Unimplemented");
+        Commands::Add { date, description } => {
+            let event = wl::Event::new(parse_date(&date), description);
+            let idx = worldline.add_event(event);
+            let lb = std::cmp::max(0, idx - 1);
+            let ub = std::cmp::min(worldline.len(), idx + 2);
+            worldline
+                .to_file(&worldline_file)
+                .expect("Could not write worldline file");
+            worldline.print_range(lb, ub);
         }
         Commands::Show { dates } => {
             if dates.len() == 0 {
@@ -57,7 +64,7 @@ fn main() {
             }
         }
         Commands::Query { query } => {
-            println!("Unimplemented");
+            worldline.query_and_print(&query);
         }
     }
 }

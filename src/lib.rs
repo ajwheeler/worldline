@@ -107,7 +107,8 @@ impl Date {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+// TODO need PartialOrd and Ord?
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Event {
     pub date: Date,
     pub description: String,
@@ -157,20 +158,28 @@ impl WorldLine {
         Ok(Self { events })
     }
 
-    fn print_for_display(&self, start_idx: usize, end_idx: usize) {
-        if self.events[start_idx..end_idx].is_empty() {
-            println!("No events");
-        } else {
-            let show_era =
-                self.events[start_idx].date.year < 0 && self.events[end_idx - 1].date.year > 0;
-            for event in &self.events[start_idx..end_idx] {
-                println!("{}", event.format_for_display(show_era));
-            }
-        }
+    pub fn to_file(&self, file_path: &str) -> Result<(), String> {
+        // TODO unimplemented
+        Ok(())
     }
 
+    /// number of events in the worldline
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
+    /// Add an event to the worldline.
+    /// Returns the index of the new event.
+    pub fn add_event(&mut self, event: Event) -> usize {
+        // binary search returns Result{usize, usize}, thus the unwrap_or_else
+        let idx = self.events.binary_search(&event).unwrap_or_else(|e| e);
+        self.events.insert(idx, event);
+        idx
+    }
+
+    /// Print all events.
     pub fn print_all(&self) {
-        self.print_for_display(0, self.events.len());
+        self.print_range(0, self.events.len());
     }
 
     /// Find the index of the first event after the given date.
@@ -179,7 +188,7 @@ impl WorldLine {
     }
 
     /// Find the index of the last event before the given date.
-    fn last_less(&self, date: &Date) -> usize {
+    fn last_before(&self, date: &Date) -> usize {
         self.events.partition_point(|e| e.date < *date)
     }
 
@@ -191,11 +200,39 @@ impl WorldLine {
         self.print_date_range(date.clone(), date);
     }
 
+    /// Print all events for a given date range.
     pub fn print_date_range(&self, start: Date, end: Date) {
         let start_idx = self.first_geq(&start);
-        let end_idx = self.last_less(&end.next());
-        dbg!(&start_idx, &end_idx);
-        self.print_for_display(start_idx, end_idx);
+        let end_idx = self.last_before(&end.next());
+        self.print_range(start_idx, end_idx);
+    }
+
+    /// Print all events for a given range of indices.
+    pub fn print_range(&self, start_idx: usize, end_idx: usize) {
+        if self.events[start_idx..end_idx].is_empty() {
+            println!("No events");
+        } else {
+            let show_era =
+                self.events[start_idx].date.year < 0 && self.events[end_idx - 1].date.year > 0;
+            for event in &self.events[start_idx..end_idx] {
+                println!("{}", event.format_for_display(show_era));
+            }
+        }
+    }
+
+    /// Print all events whose descriptions contain the given query string (case-insensitive).
+    pub fn query_and_print(&self, query: &str) {
+        let query = query.to_lowercase();
+        let mut show_era = false;
+
+        for event in self.events.iter() {
+            if event.description.to_lowercase().contains(&query) {
+                if event.date.year < 0 {
+                    show_era = true;
+                }
+                println!("{}", event.format_for_display(show_era));
+            }
+        }
     }
 }
 
