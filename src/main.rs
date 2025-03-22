@@ -12,14 +12,25 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    #[command(alias = "a")]
+    /// Add a new event to the timeline
+    #[command(about = "Add a new event with date and description", alias = "a")]
     Add { date: String, description: String },
-    #[command(alias = "s")]
+
+    /// Display events from the timeline
+    #[command(
+        about = "Show events. No args = show all. One date = show that date/month/year. Two dates = show range",
+        alias = "s"
+    )]
     Show {
         #[arg(num_args = 0..=2)]
         dates: Vec<String>,
     },
-    #[command(alias = "q")]
+
+    /// Search for events
+    #[command(
+        about = "Search for events containing text (case-insensitive)",
+        alias = "q"
+    )]
     Query { query: String },
 }
 
