@@ -46,10 +46,25 @@ fn parse_date(date_str: &str) -> wl::Date {
 fn main() {
     let cli = Cli::parse();
 
-    let worldline_file =
-        env::var("WORLDLINE_FILE").expect("WORLDLINE_FILE environment variable not set");
-    let mut worldline =
-        wl::WorldLine::from_file(&worldline_file).expect("Could not read worldline file");
+    let worldline_file = match env::var("WORLDLINE_FILE") {
+        Ok(filename) => filename,
+        Err(e) => {
+            eprintln!(
+                "Could not read the WORLDLINE_FILE environment variable: {}",
+                e
+            );
+            std::process::exit(1);
+        }
+    };
+
+    let mut worldline = match wl::WorldLine::from_file(&worldline_file) {
+        Ok(worldline) => worldline,
+        Err(e) => {
+            eprintln!("Error: Could not read worldline file: {}", e);
+            eprintln!("Expected to find a worldline file at {}", worldline_file);
+            std::process::exit(1);
+        }
+    };
 
     match cli.command {
         Commands::Add { date, description } => {
@@ -57,9 +72,9 @@ fn main() {
             let idx = worldline.add_event(event);
             let lb = std::cmp::max(0, idx - 1);
             let ub = std::cmp::min(worldline.len(), idx + 2);
-            worldline
-                .to_file(&worldline_file)
-                .expect("Could not write worldline file");
+            if let Err(e) = worldline.to_file(&worldline_file) {
+                eprintln!("Warning: Could not write worldline file: {}", e);
+            }
             worldline.print_range(lb, ub);
         }
         Commands::Show { dates } => {
