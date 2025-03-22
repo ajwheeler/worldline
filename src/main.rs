@@ -1,8 +1,6 @@
 use clap::{Parser, Subcommand};
 use std::env;
 
-use wl;
-
 #[derive(Parser)]
 #[command(author, version, about = "Manipulate the worldline")]
 struct Cli {
@@ -78,7 +76,7 @@ fn main() {
             worldline.print_range(lb, ub);
         }
         Commands::Show { dates } => {
-            if dates.len() == 0 {
+            if dates.is_empty() {
                 worldline.print_all();
             } else if dates.len() == 1 {
                 let date = parse_date(&dates[0]);
