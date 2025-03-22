@@ -43,12 +43,12 @@ impl Date {
         let year = r"(?<year>-?\d{1,4})"; // Year with optional minus sign
         let month = r"(?:-(?<month>\d{1,2}))?"; // Optional month part. Outer group is non-capturing.
         let day = r"(?:-(?<day>\d{1,2}))?"; // Optional day part. Outer group is non-capturing.
-        let pattern = format!(r"^{era}\s*{year}{month}{day}(?:\s+|$)");
+        let pattern = format!(r"^\s*{era}\s*{year}{month}{day}(?:\s+|$)");
         Regex::new(&pattern).unwrap()
     }
     const DATE_REGEX: LazyCell<Regex> = LazyCell::new(Self::construct_date_regex);
 
-    /// Parse a date string into a [year, month, day] array.
+    /// Parse a string starting with a date into a [year, month, day] array.
     ///
     /// Accepts dates in the following formats:
     /// - BCE/BC dates: "BCE 44" or "-44"
@@ -158,9 +158,15 @@ impl WorldLine {
         Ok(Self { events })
     }
 
-    pub fn to_file(&self, file_path: &str) -> Result<(), String> {
-        // TODO unimplemented
-        Ok(())
+    pub fn to_file(&self, file_path: &str) -> Result<(), std::io::Error> {
+        // intercalate events with newlines
+        // fold is the cleanest way to do this without unnecesarily allocating a new vector
+        let contents = self
+            .events
+            .iter()
+            .map(|e| e.format_for_file())
+            .fold(String::new(), |a, b| a + &b + "\n");
+        fs::write(file_path, contents)
     }
 
     /// number of events in the worldline
@@ -318,6 +324,7 @@ mod tests {
     fn test_parse_events() {
         let test_cases = [
             ("CE 2023 Some event", (2023, 0, 0), "Some event"),
+            (" CE 2023 Some event", (2023, 0, 0), "Some event"),
             ("2023-12-25 Christmas Day", (2023, 12, 25), "Christmas Day"),
             ("-44 et tu", (-44, 0, 0), "et tu"),
         ];
