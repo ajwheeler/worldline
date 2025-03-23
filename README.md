@@ -1,4 +1,4 @@
-`wl` is a simple utility for building and searching a plain-text timeline (`$WORDLINE_FILE`).  I use it to keep track of dates.
+`wl` is a simple utility for building and searching a plain-text timeline (`$WORLDLINE_FILE`).  I use it to keep track of dates.
 
 ```
 > wl --help
