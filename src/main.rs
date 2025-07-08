@@ -30,6 +30,10 @@ enum Commands {
         alias = "q"
     )]
     Query { query: String },
+
+    /// Export to anki file
+    #[command(about = "Export to file which is easilly importable with Anki")]
+    Export { outfile: String },
 }
 
 fn parse_date(date_str: &str) -> wl::Date {
@@ -89,6 +93,12 @@ fn main() {
         }
         Commands::Query { query } => {
             worldline.query_and_print(&query);
+        }
+        Commands::Export { outfile } => {
+            if let Err(e) = worldline.to_anki_file(outfile) {
+                eprintln!("Error: Could not export to anki file: {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }

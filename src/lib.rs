@@ -161,12 +161,22 @@ impl WorldLine {
     pub fn to_file(&self, file_path: &str) -> Result<(), std::io::Error> {
         // intercalate events with newlines
         // fold is the cleanest way to do this without unnecesarily allocating a new vector
-        let contents = self
-            .events
+        let contents = self.build_file("");
+        fs::write(file_path, contents)
+    }
+
+    pub fn to_anki_file(&self, file_path: String) -> Result<(), std::io::Error> {
+        let header = "#separator:Tab\n";
+        let mut contents = self.build_file("	");
+        contents.insert_str(0, header);
+        fs::write(file_path, contents)
+    }
+
+    fn build_file(&self, separator: &str) -> String {
+        self.events
             .iter()
             .map(|e| e.format_for_file())
-            .fold(String::new(), |a, b| a + &b + "\n");
-        fs::write(file_path, contents)
+            .fold(String::new(), |a, b| a + separator + &b + "\n")
     }
 
     /// number of events in the worldline
